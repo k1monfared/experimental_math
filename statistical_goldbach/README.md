@@ -59,7 +59,7 @@ The original code is written for [SageMath](https://www.sagemath.org/):
 
 ```python
 # In a Sage notebook or terminal
-load("statistical_goldbach")
+load("statistical_goldbach.sage")
 plot_number_of_decompositions(2, 1000, (x/(a*pi))^(1/a))
 ```
 
@@ -68,11 +68,22 @@ Parameters:
 - `upper_limit`: End of the range
 - `function_of_x`: Comparison curve (default uses golden ratio)
 
+### Regenerating the plots
+
+A standalone Python script is included to regenerate all 6 visualizations:
+
+```bash
+pip install matplotlib numpy sympy
+python generate_plots.py          # default N=10,000
+python generate_plots.py 50000    # custom upper limit
+```
+
 ## Files
 
 | File | Description |
 |------|-------------|
-| `statistical_goldbach` | SageMath source code |
+| `statistical_goldbach.sage` | Original SageMath source code |
+| `generate_plots.py` | Python script to generate all 6 visualizations |
 | `goldbach_comet.png` | Scatter plot of all decomposition counts |
 | `goldbach_curve_fit.png` | Color-coded comparison with golden ratio curve |
 | `goldbach_comparison.png` | Golden ratio vs Hardy-Littlewood predictions |

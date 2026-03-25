@@ -22,7 +22,7 @@ Key ideas:
 **Usage** (requires SageMath):
 
 ```python
-load("statistical_goldbach/statistical_goldbach")
+load("statistical_goldbach/statistical_goldbach.sage")
 plot_number_of_decompositions(2, 1000, (x/(a*pi))^(1/a))
 ```
 
