@@ -25,34 +25,110 @@ N = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
 PHI = (1 + math.sqrt(5)) / 2  # golden ratio
 C2 = 0.6601618                 # twin prime constant
 
-# --- Compute decompositions ---
-print(f'Computing Goldbach decompositions for even numbers up to {N:,}...')
-primes_set = set(primerange(2, N))
-primes_list = sorted(primes_set)
 
-evens = list(range(4, N + 1, 2))
-counts = []
-for e in evens:
-    c = 0
-    for p in primes_list:
-        if p > e:
-            break
-        if (e - p) in primes_set:
-            c += 1
-    counts.append(c)
+# ============================================================
+# Core functions (Python equivalents of statistical_goldbach.sage)
+# ============================================================
 
-evens = np.array(evens)
-counts = np.array(counts)
-print(f'Done. {len(evens)} even numbers, max decompositions: {max(counts)}')
+def list_of_all_decompositions(lower, upper):
+    """List all decompositions of even numbers in [lower, upper] as sums of two primes.
 
-# --- Helper functions ---
+    Returns a list of [even_number, prime1, prime2] triples.
+    This is equivalent to list_of_all_decompositions() in the SageMath code.
+
+    Example:
+        >>> list_of_all_decompositions(4, 12)
+        [[4, 2, 2], [6, 3, 3], [8, 3, 5], [8, 5, 3], [10, 3, 7], [10, 5, 5], [10, 7, 3], [12, 5, 7], [12, 7, 5]]
+    """
+    primes = sorted(primerange(2, upper))
+    primes_s = set(primes)
+    decompositions = []
+    for even in range(lower if lower % 2 == 0 else lower + 1, upper + 1, 2):
+        for p in primes:
+            if p > even:
+                break
+            if (even - p) in primes_s:
+                decompositions.append([even, p, even - p])
+    return decompositions
+
+
+def number_of_decompositions(lower, upper):
+    """Count the number of Goldbach decompositions for each even number in [lower, upper].
+
+    Returns a list of [even_number, count] pairs.
+    This is equivalent to number_of_decompositions() in the SageMath code.
+
+    Example:
+        >>> number_of_decompositions(4, 12)
+        [[4, 1], [6, 1], [8, 2], [10, 3], [12, 2]]
+    """
+    primes = sorted(primerange(2, upper))
+    primes_s = set(primes)
+    results = []
+    for even in range(lower if lower % 2 == 0 else lower + 1, upper + 1, 2):
+        count = sum(1 for p in primes if p <= even and (even - p) in primes_s)
+        results.append([even, count])
+    return results
+
+
+def plot_number_of_decompositions(lower_limit, upper_limit, comparison_fn=None):
+    """Plot Goldbach decomposition counts with a comparison curve.
+
+    Points are colored:
+      - blue: above the curve
+      - red: below the curve
+      - green: on the curve
+
+    This is the Python equivalent of plot_number_of_decompositions() in the SageMath code.
+
+    Args:
+        lower_limit: Start of the even number range.
+        upper_limit: End of the range.
+        comparison_fn: A function f(x) to compare against.
+                       Defaults to the golden ratio curve (x / (phi * pi))^(1/phi).
+
+    Returns:
+        (fig, ax) matplotlib figure and axes.
+    """
+    if comparison_fn is None:
+        comparison_fn = author_curve
+
+    decomps = number_of_decompositions(lower_limit, upper_limit)
+    xs = np.array([d[0] for d in decomps])
+    ys = np.array([d[1] for d in decomps])
+    curve_ys = np.array([comparison_fn(x) for x in xs])
+
+    fig, ax = plt.subplots(figsize=(14, 7))
+
+    above = ys > curve_ys
+    below = ys < curve_ys
+    on = ~above & ~below
+
+    ax.scatter(xs[above], ys[above], s=8, c='blue', alpha=0.6, label='Above curve')
+    ax.scatter(xs[below], ys[below], s=8, c='red', alpha=0.6, label='Below curve')
+    ax.scatter(xs[on], ys[on], s=12, c='green', alpha=0.8, label='On curve')
+
+    x_line = np.linspace(lower_limit, upper_limit, 500)
+    ax.plot(x_line, [comparison_fn(x) for x in x_line], 'k-', linewidth=2, label='Comparison curve')
+
+    ax.set_xlabel('Even number n')
+    ax.set_ylabel('Number of decompositions')
+    ax.set_title(f'Goldbach Decompositions ({lower_limit} to {upper_limit})')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    return fig, ax
+
 
 def author_curve(x):
     """The golden ratio bounding curve: f(x) = (x / (phi * pi))^(1/phi)"""
     return (x / (PHI * math.pi)) ** (1.0 / PHI)
 
-def hardy_littlewood(n):
+
+def hardy_littlewood(n, primes=None):
     """Simplified Hardy-Littlewood prediction for the number of Goldbach representations."""
+    if primes is None:
+        primes = sorted(primerange(2, n))
     if n < 4:
         return 0
     ln_n = math.log(n)
@@ -60,7 +136,7 @@ def hardy_littlewood(n):
         return 1
     base = 2 * C2 * n / (ln_n ** 2)
     prod = 1.0
-    for p in primes_list:
+    for p in primes:
         if p > n // 2:
             break
         if p == 2:
@@ -69,11 +145,24 @@ def hardy_littlewood(n):
             prod *= (p - 1) / (p - 2)
     return base * prod
 
+
+# ============================================================
+# Compute data for plots
+# ============================================================
+print(f'Computing Goldbach decompositions for even numbers up to {N:,}...')
+primes_set = set(primerange(2, N))
+primes_list = sorted(primes_set)
+
+decomp_data = number_of_decompositions(4, N)
+evens = np.array([d[0] for d in decomp_data])
+counts = np.array([d[1] for d in decomp_data])
+print(f'Done. {len(evens)} even numbers, max decompositions: {max(counts)}')
+
 author_pred = np.array([author_curve(e) for e in evens])
-hl_pred = np.array([hardy_littlewood(e) for e in evens])
+hl_pred = np.array([hardy_littlewood(e, primes_list) for e in evens])
 x_smooth = np.linspace(4, N, 1000)
 y_smooth = np.array([author_curve(x) for x in x_smooth])
-hl_smooth = np.array([hardy_littlewood(x) for x in x_smooth])
+hl_smooth = np.array([hardy_littlewood(x, primes_list) for x in x_smooth])
 
 # Change to script directory so images are saved alongside the code
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
