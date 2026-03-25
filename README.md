@@ -4,24 +4,29 @@ A collection of mathematical experiments and explorations, often venturing outsi
 
 ## Contents
 
-### Statistical Goldbach
+### [Statistical Goldbach](statistical_goldbach/)
 
-Goldbach's Conjecture examined from a statistical point of view. The script (written for [SageMath](https://www.sagemath.org/)) counts the number of ways each even number can be decomposed as a sum of two primes, then plots the results against a conjectured bounding function.
+Goldbach's Conjecture examined from a statistical point of view. For each even number up to 10,000, count how many ways it can be written as a sum of two primes, then analyze the patterns.
+
+![Goldbach's Comet](statistical_goldbach/goldbach_comet.png)
 
 Key ideas:
 
-- For every even number up to a given limit, enumerate all representations as a sum of two primes
-- Plot the count of decompositions and color each point based on whether it falls above, on, or below a comparison curve
-- The default comparison function uses the golden ratio and pi: `f(x) = (x / (phi * pi))^(1/phi)`
+- Enumerate all prime-pair decompositions of every even number up to a given limit
+- The resulting scatter plot ("Goldbach's comet") reveals striking structure with multiple arms
+- Compare against a conjectured bounding curve using the golden ratio: `f(x) = (x / (phi * pi))^(1/phi)`
+- The minimum number of decompositions grows steadily -- it never approaches zero, supporting the conjecture
+
+![Lower Bound](statistical_goldbach/goldbach_minimum.png)
 
 **Usage** (requires SageMath):
 
 ```python
-# In a Sage notebook or terminal
 load("statistical_goldbach/statistical_goldbach")
+plot_number_of_decompositions(2, 1000, (x/(a*pi))^(1/a))
 ```
 
-See [`statistical_goldbach/README.md`](statistical_goldbach/README.md) for more details.
+See [`statistical_goldbach/README.md`](statistical_goldbach/README.md) for full analysis with 6 visualizations.
 
 ## License
 
